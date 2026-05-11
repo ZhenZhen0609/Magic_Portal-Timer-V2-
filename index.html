@@ -139,6 +139,41 @@
   </div>
 </div>
 
+<!-- Chat Button -->
+<div class="chat-fab" id="chatFab" onclick="toggleChat()">
+  <span class="chat-fab-icon">🪶</span>
+  <span class="chat-fab-text">Chat</span>
+</div>
+
+<!-- Chat Window -->
+<div class="chat-window" id="chatWindow">
+  <div class="chat-header-bar">
+    <div class="chat-current-char">
+      <span class="chat-char-avatar" id="chatCharAvatar">⚡</span>
+      <span class="chat-char-name" id="chatCharName">Harry Potter</span>
+    </div>
+    <button class="chat-minimize" onclick="toggleChat()">−</button>
+  </div>
+  
+  <div class="chat-char-select" id="chatCharSelect">
+    <div class="chat-char-btn active" data-char="harry" onclick="selectChatCharacter('harry')">⚡</div>
+    <div class="chat-char-btn" data-char="hermione" onclick="selectChatCharacter('hermione')">📚</div>
+    <div class="chat-char-btn" data-char="ron" onclick="selectChatCharacter('ron')">🧡</div>
+    <div class="chat-char-btn" data-char="neville" onclick="selectChatCharacter('neville')">🌿</div>
+    <div class="chat-char-btn" data-char="luna" onclick="selectChatCharacter('luna')">🌙</div>
+    <div class="chat-char-btn" data-char="newt" onclick="selectChatCharacter('newt')">🦋</div>
+    <div class="chat-char-btn" data-char="queenie" onclick="selectChatCharacter('queenie')">✨</div>
+    <div class="chat-char-btn" data-char="voldemort" onclick="selectChatCharacter('voldemort')">🐍</div>
+  </div>
+  
+  <div class="chat-messages" id="chatMessages"></div>
+  
+  <div class="chat-input-bar">
+    <input type="text" class="chat-input" id="chatInput" placeholder="Ask about potions..." onkeypress="handleChatKeyPress(event)">
+    <button class="chat-send" onclick="sendChatMessage()">✦</button>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

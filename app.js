@@ -677,6 +677,9 @@ function completePotion() {
   // Show result
   showCompletion(recipe, expGain);
   createFireworks();
+  
+  // Notify chat character
+  notifyChatCharacter(recipe.name);
 
   // Reset
   newPotion();
@@ -1090,3 +1093,213 @@ function init() {
 }
 
 init();
+
+// ════════════════════════════════════════════════
+// CHAT SYSTEM
+// ════════════════════════════════════════════════
+
+let chatCharacter = 'harry';
+let chatHistory = [];
+let chatRelationships = { harry: 50, hermione: 50, ron: 50, neville: 50, luna: 50, newt: 50, queenie: 50, voldemort: 0 };
+
+const CHAT_CHARS = {
+  harry: {
+    name: 'Harry Potter', avatar: '⚡',
+    greeting: "Hey! Ready to brew some potions together?",
+    keywords: {
+      'tired|exhausted': ["I know the feeling. Even facing Voldemort was exhausting!", "Take a break. Rest is important for magical focus."],
+      'ingredients|what should i use': ["Moonstone Powder and Mandrake Root are great for beginners!", "Light and Fire elements work well together."],
+      'complete|finished|done': ["Brilliant! Which potion did you make?", "Great! Every potion brings you closer to mastery."],
+      'hint|help|tip': ["Try 3 elements of the same type for balanced potions.", "The timer helps you focus - it's not just about speed!"],
+      'fire|phoenix': ["Fire elements are powerful! Phoenix Feather is legendary.", "Careful with fire - intense but rewarding."],
+      'light|moon': ["Light elements feel protective somehow.", "Moonstone Powder is perfect for concentration."],
+      'dark|shadow': ["Dark ingredients are powerful but use them carefully.", "I've seen what dark potions can do..."]
+    },
+    default: ["That's interesting! How does it relate to your brewing?", "Focus on your potion, everything else will follow."],
+    signature: ["Brilliant!", "Wicked!"]
+  },
+  hermione: {
+    name: 'Hermione Granger', avatar: '📚',
+    greeting: "Oh excellent! I've been studying Advanced Potion-Making. What do you need?",
+    keywords: {
+      'tired|exhausted': ["Education is exhausting but rewarding!", "Perhaps you need a Pepperup Potion?"],
+      'ingredients|what should i use': ["Beginners should start with Mandrake Root, Moonstone Powder, and Frost Mint!", "Check ingredient properties first - each has specific elemental affinities."],
+      'complete|finished|done': ["Splendid! Did you follow instructions precisely?", "Well done! Which potion? I hope you documented your process!"],
+      'hint|help|tip': ["Chapter 12 states: 'The key is patience and precision.'", "I've compiled a 47-page guide if you need it!"],
+      'fire|phoenix': ["Phoenix Feather is legendary by Ministry classification!", "Fire-based potions need precise temperature control."],
+      'herb|plant|mandrake': ["Mandrake Root is essential for restoration potions!", "I've read extensively on herbology."],
+      'recipe|how to make': ["Each recipe requires specific combinations and timing.", "I can explain any of the 18 known recipes!"]
+    },
+    default: ["Could you be more specific?", "Have you tried consulting the textbook?"],
+    signature: ["Honestly!", "According to..."]
+  },
+  ron: {
+    name: 'Ron Weasley', avatar: '🧡',
+    greeting: "Bloody hell, another potion brewer! I'll try not to mess anything up!",
+    keywords: {
+      'tired|exhausted': ["Bloody hell, tell me about it!", "Want me to nick some snacks from the kitchen?"],
+      'ingredients|what should i use': ["Honestly? I just throw stuff in. Don't tell Hermione!", "Fred and George used all our ingredients for pranks..."],
+      'complete|finished|done': ["Bloody brilliant! Which one?", "Nice one! Hermione would be proud."],
+      'hint|help|tip': ["Here's a tip: listen to Hermione instead of me!", "Chocolate helps everything, including potion brewing."],
+      'fire|phoenix': ["Fire ingredients? Blimey, proper dangerous. Cool though!", "Fred and George set the Burrow on fire once. Mum was NOT happy."],
+      'herb|plant': ["Neville knows all about plants!", "Gnomes keep ruining our garden."]
+    },
+    default: ["Bloody hell, no idea what you're on about!", "Hermione would understand it."],
+    signature: ["Bloody hell!", "Blimey!"]
+  },
+  neville: {
+    name: 'Neville Longbottom', avatar: '🌿',
+    greeting: "Oh! H-hello! Interested in herbology? I-I've learned a lot about magical plants!",
+    keywords: {
+      'herb|plant|mandrake': ["Plants are my specialty! Mandrake needs earmuffs!", "I've cultivated Moonlight Cactus and Frost Mint!", "Magical plants respond to emotions. Approach with patience."],
+      'ingredients|what should i use': ["I recommend Mandrake Root and Life Leaf for beginners.", "Nature elements are wonderful! Forest Heart is advanced."],
+      'complete|finished|done': ["You did it! That takes real courage.", "Wonderful! Professor Sprout would be proud."],
+      'hint|help|tip': ["Plants grow better when you talk to them kindly.", "Dawn and dusk are when plant magic is strongest."],
+      'fire|phoenix': ["F-fire? Plants don't like fire much...", "Phoenix Ash can fertilize magical plants though."],
+      'scared|afraid': ["I know how that feels. I was scared of everything!", "Fear is natural. Don't let it stop you."]
+    },
+    default: ["I-I'm not sure, but I want to help!", "Maybe we could talk about plants?"],
+    signature: ["Oh!", "Um..."]
+  },
+  luna: {
+    name: 'Luna Lovegood', avatar: '🌙',
+    greeting: "Hello! The Nargles are active today, but they won't bother your brewing.",
+    keywords: {
+      'herb|plant': ["Plants are friends! They whisper secrets at full moon.", "Daddy says Moonlight Cactus can see into other dimensions."],
+      'ingredients|what should i use': ["I recommend star elements - Star Dust and Aurora Moss.", "Light ingredients sing with the cosmos."],
+      'complete|finished|done': ["How lovely! The Wrackspurts are dancing around you.", "You've made something beautiful."],
+      'hint|help|tip': ["Don't forget to wrackspurt-proof your cauldron.", "Best potions are made when Mercury isn't in retrograde."],
+      'light|moon|star': ["Moonstone resonates with lunar cycles!", "Star elements connect us to distant worlds."],
+      'weird|strange|crazy': ["Being strange is the only way to see invisible wonders.", "Normal is just a setting on a washing machine."]
+    },
+    default: ["That's fascinating! Daddy might write about that.", "The unseen world has much to teach us."],
+    signature: ["...", "How interesting."]
+  },
+  newt: {
+    name: 'Newt Scamander', avatar: '🦋',
+    greeting: "Oh, hello! I was observing a Mooncalf. Care to learn about creatures and potions?",
+    keywords: {
+      'herb|plant': ["Plants and creatures work wonderfully together.", "Many creature ingredients come from plants they interact with."],
+      'ingredients|what should i use': ["Thunder Core from Thunderbirds is remarkable! Use shed feathers only.", "Wind Essence from Occamys is wonderful for flying potions."],
+      'complete|finished|done': ["Splendid work! Graphorns love certain potion residues.", "Well done! Some creatures are attracted to specific potions."],
+      'hint|help|tip': ["Work with creatures, not against them.", "Understanding creature behavior helps predict magical interactions."],
+      'creature|animal|beast': ["I could talk about creatures for hours!", "Every creature has unique magical properties."],
+      'thunder|lightning': ["Thunderbirds carry storm magic - powerful but volatile!", "Never cage a Thunderbird."]
+    },
+    default: ["Fascinating! Does this relate to creatures?", "I see things from a creature's perspective."],
+    signature: ["Splendid!", "Quite right!"]
+  },
+  queenie: {
+    name: 'Queenie Goldstein', avatar: '✨',
+    greeting: "Oh, honey! I can tell you're eager to learn. Your thoughts are practically glowing!",
+    keywords: {
+      'herb|plant': ["Plants have feelings too! I can sense them.", "Mandrakes scream but they're also scared. Treat them gently."],
+      'ingredients|what should i use': ["I sense you're drawn to mystic elements. Trust that!", "Your thoughts shimmer with light elements."],
+      'complete|finished|done': ["I can feel your pride! Radiating like warm sunshine.", "Your mind is dancing with joy! Beautiful."],
+      'hint|help|tip': ["I'm sensing hesitation. Trust yourself more, honey.", "Your subconscious suggests... light and mystic elements."],
+      'love|heart|feel': ["Feelings are magic too!", "The strongest potions are brewed with genuine emotion."],
+      'scared|afraid': ["I feel your fear, sweetie. But I also feel your courage.", "Your mind is clouded. Take a breath."]
+    },
+    default: ["I can sense your curiosity. Good thing!", "Your thoughts are fascinating. Tell me more?"],
+    signature: ["Oh, honey...", "Sweetie..."]
+  },
+  voldemort: {
+    name: 'Lord Voldemort', avatar: '🐍',
+    greeting: "Ah... another who seeks the power of potions. Ambitious.",
+    keywords: {
+      'tired|exhausted': ["Weakness is a choice. Push through it.", "Fatigue is for mortals. Are you mortal... or more?"],
+      'ingredients|what should i use': ["The most powerful ingredients are dangerous. Dark elements hold true power.", "Void Core... Fate's Thread... Time Sand... worthy of a true sorcerer."],
+      'complete|finished|done': ["Good. But was it of consequence? Or mere child's play?", "Adequate. You can do better."],
+      'hint|help|tip': ["Combine dark and mystic elements.", "Power comes to those who seek forbidden paths."],
+      'dark|shadow': ["Ah, now you speak my language.", "Embrace the darkness. That is where true power lies."],
+      'immortal|eternal': ["Immortality... yes. That is the goal.", "To transcend death... there are methods."]
+    },
+    default: ["Interesting... but irrelevant.", "Mediocre thinking. You can do better."],
+    signature: ["...", "Perhaps..."]
+  }
+};
+
+function toggleChat() {
+  const win = document.getElementById('chatWindow');
+  win.classList.toggle('active');
+}
+
+function selectChatCharacter(charKey) {
+  chatCharacter = charKey;
+  const char = CHAT_CHARS[charKey];
+  
+  document.querySelectorAll('.chat-char-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.chat-char-btn[data-char="${charKey}"]`).classList.add('active');
+  
+  document.getElementById('chatCharAvatar').textContent = char.avatar;
+  document.getElementById('chatCharName').textContent = char.name;
+  
+  document.getElementById('chatMessages').innerHTML = '';
+  chatHistory = [];
+  addChatMessage(char.greeting, 'char');
+}
+
+function addChatMessage(content, type) {
+  const msg = document.createElement('div');
+  msg.className = `chat-msg ${type}`;
+  msg.textContent = content;
+  document.getElementById('chatMessages').appendChild(msg);
+  document.getElementById('chatMessages').scrollTop = 9999;
+  chatHistory.push({ type, content });
+}
+
+function generateChatReply(userMsg) {
+  const char = CHAT_CHARS[chatCharacter];
+  const lower = userMsg.toLowerCase();
+  
+  for (const [pattern, responses] of Object.entries(char.keywords)) {
+    if (new RegExp(pattern, 'i').test(lower)) {
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+  }
+  
+  let reply = char.default[Math.floor(Math.random() * char.default.length)];
+  
+  if (Math.random() > 0.6 && char.signature) {
+    reply = char.signature[Math.floor(Math.random() * char.signature.length)] + ' ' + reply;
+  }
+  
+  return reply;
+}
+
+function sendChatMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  
+  addChatMessage(msg, 'user');
+  input.value = '';
+  
+  setTimeout(() => {
+    addChatMessage(generateChatReply(msg), 'char');
+  }, 400 + Math.random() * 400);
+}
+
+function handleChatKeyPress(e) {
+  if (e.key === 'Enter') sendChatMessage();
+}
+
+// Notify character when potion completed
+function notifyChatCharacter(potionName) {
+  const char = CHAT_CHARS[chatCharacter];
+  const messages = {
+    'Harry Potter': `${potionName}? That's brilliant! Well done!`,
+    'Hermione Granger': `${potionName}! Excellent work! Did you document the process?`,
+    'Ron Weasley': `Bloody hell, ${potionName}! That's proper advanced!`,
+    'Neville Longbottom': `You made ${potionName}! That takes real courage!`,
+    'Luna Lovegood': `The Wrackspurts are dancing! ${potionName} is lovely.`,
+    'Newt Scamander': `Splendid! ${potionName} - some creatures would love that!`,
+    'Queenie Goldstein': `Oh honey, ${potionName}! I can feel your pride radiating!`,
+    'Lord Voldemort': `${potionName}... adequate. But you can do better.`
+  };
+  
+  const win = document.getElementById('chatWindow');
+  if (win.classList.contains('active')) {
+    addChatMessage(messages[char.name] || `${potionName} - interesting.`, 'char');
+  }
+}
