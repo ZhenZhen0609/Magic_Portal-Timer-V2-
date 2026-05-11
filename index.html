@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魔药番茄钟 · Arcane Focus</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700&family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="starfield"></div>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">✦ 魔药番茄钟 · Arcane Focus ✦</div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat-chip">
+      <span class="stat-icon">⚔️</span>
+      <span class="stat-label">等级</span>
+      <span class="stat-val" id="statLevel">1</span>
+      <span class="title-badge" id="statTitle">学徒</span>
+    </div>
+    <div class="exp-pill">
+      <span style="font-size:0.75rem;color:var(--text-muted)">✨ EXP</span>
+      <div class="exp-track"><div class="exp-fill" id="expFill" style="width:0%"></div></div>
+      <span class="stat-val" style="font-size:0.75rem"><span id="statExp">0</span>/<span id="statExpMax">100</span></span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-icon">🔥</span>
+      <span class="stat-label">连续</span>
+      <span class="stat-val"><span id="statStreak">0</span>天</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-icon">📖</span>
+      <span class="stat-label">图鉴</span>
+      <span class="stat-val"><span id="statPokedex">0</span>/<span id="statPokedexTotal">0</span></span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-icon">🧪</span>
+      <span class="stat-label">总计</span>
+      <span class="stat-val"><span id="statTotal">0</span>瓶</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('brew',this)">⚗️ 炼制坩埚</button>
+    <button class="tab-btn" onclick="switchTab('gallery',this)">🔮 魔药陈列室</button>
+  </div>
+
+  <!-- Brew view -->
+  <div id="brew-view">
+    <div class="brew-layout">
+
+      <!-- Left: Material Sidebar -->
+      <div class="material-sidebar">
+        <div class="sidebar-title">✦ 原料架 ✦</div>
+        <div class="material-scroll" id="materialGrid"></div>
+      </div>
+
+      <!-- Center: Cauldron -->
+      <div class="panel">
+        <div class="panel-title" style="width:100%;text-align:center">炼制坩埚</div>
+        <div class="cauldron-container">
+          <div class="cauldron-wrap">
+            <div id="cauldronCanvas">
+              <div class="cauldron-drop-zone" id="dropZone"></div>
+            </div>
+          </div>
+          <div class="timer-section">
+            <div class="timer-ring-wrap">
+              <svg class="timer-svg" width="180" height="180" viewBox="0 0 180 180">
+                <circle class="timer-track" cx="90" cy="90" r="80" stroke-width="6"/>
+                <circle class="timer-progress" id="timerRing" cx="90" cy="90" r="80"
+                  stroke-width="6" stroke-dasharray="502.65" stroke-dashoffset="0"
+                  transform="rotate(-90 90 90)"/>
+                <text class="timer-text" x="90" y="90" id="timerText">25:00</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="controls">
+          <button class="btn btn-start" id="btnStart" onclick="startTimer()">▶ 开始炼制</button>
+          <button class="btn btn-pause" id="btnPause" onclick="pauseTimer()" style="display:none">⏸ 暂停</button>
+          <button class="btn btn-complete" id="btnComplete" onclick="completePotion()" style="display:none">✦ 完成魔药</button>
+          <button class="btn btn-reset" onclick="resetTimer()">↺ 重置</button>
+        </div>
+      </div>
+
+      <!-- Right: Added list & Progress -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="panel">
+          <div class="panel-title">已入坩埚</div>
+          <div class="added-list" id="addedList">
+            <div class="added-empty">虚空等待<br>投入原料</div>
+          </div>
+        </div>
+        <!-- Progress -->
+        <div class="panel">
+          <div class="panel-title">炼制进度</div>
+          <div class="prog-row">
+            <div>⏳ 总时间：<span id="progTime">0</span> 分钟</div>
+            <div>📦 原料：<span id="progCount">0</span>/6 种</div>
+          </div>
+          <div class="slot-row" id="slotRow">
+            <span class="slot-empty">投入原料，开始你的炼制之旅…</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Gallery view -->
+  <div id="gallery-view">
+    <div class="panel" style="min-height:200px">
+      <div class="panel-title">已炼制的魔药</div>
+      <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Completion overlay -->
+<div class="completion-overlay" id="completionOverlay">
+  <div class="completion-box" id="completionBox">
+    <div class="completion-orb" id="compOrb">🧪</div>
+    <div class="completion-name" id="compName">神秘混合药剂</div>
+    <div class="completion-desc" id="compDesc">传说中的魔药效果……</div>
+    <div class="completion-rewards">
+      <div class="reward-chip" id="compExp">+50 EXP</div>
+      <div class="reward-chip" id="compStreak">🔥 连续 1 天</div>
+    </div>
+    <button class="completion-close" onclick="closeCompletion()">✦ 继续炼制 ✦</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
